@@ -3,6 +3,7 @@ import django
 from django.db import models
 from django.db.models.signals import pre_save
 from django.utils import timezone
+from model_utils.fields import MonitorField
 
 from dirtyfields import DirtyFieldsMixin
 from dirtyfields.compare import timezone_support_compare
@@ -112,8 +113,23 @@ class TestDoubleForeignKeyModel(DirtyFieldsMixin, models.Model):
     fkey2 = models.ForeignKey(TestModel, null=True, related_name='fkey2')
 
 
+class TestMonitorFieldModel(DirtyFieldsMixin, models.Model):
+    characters = models.CharField(max_length=10, default='hi')
+    monitored_field1 = models.BooleanField(default=False)
+    monitor = MonitorField(monitor='monitored_field1', when=[True], default=None, blank=True, null=True)
+
+
+class TestDoubleMonitorFieldModel(DirtyFieldsMixin, models.Model):
+    characters = models.CharField(max_length=10, default='hi')
+    monitored_field1 = models.BooleanField(default=False)
+    monitor = MonitorField(monitor='monitored_field1', when=[True], default=None, blank=True, null=True)
+    monitored_field2 = models.BooleanField(default=False)
+    monitor2 = MonitorField(monitor='monitored_field2', when=[True], default=None, blank=True, null=True)
+
+
 if is_postgresql_env_with_json_field():
     from django.contrib.postgres.fields import JSONField
 
     class TestModelWithJSONField(DirtyFieldsMixin, models.Model):
         json_field = JSONField()
+

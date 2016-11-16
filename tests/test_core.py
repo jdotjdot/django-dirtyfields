@@ -2,7 +2,8 @@ from decimal import Decimal
 import pytest
 
 from .models import (TestModel, TestModelWithForeignKey, TestModelWithOneToOneField,
-                     SubclassModel, TestModelWithDecimalField)
+                     SubclassModel, TestModelWithDecimalField, TestMonitorFieldModel,
+                     TestDoubleMonitorFieldModel)
 
 
 
@@ -153,3 +154,39 @@ def test_verbose_mode():
     assert tm.get_dirty_fields(verbose=True) == {
         'boolean': {'saved': True, 'current': False}
     }
+
+@pytest.mark.django_db
+def test_recursion_errors_from_queryset_only_method():
+    # include list() to force evaluation of the queryset
+
+    def get_fields_with_model(MyModel):
+        return [
+            (f, f.model if f.model != MyModel else None)
+            for f in MyModel._meta.get_fields()
+            if not f.is_relation
+            or f.one_to_one
+            or (f.many_to_one and f.related_model)
+        ]
+
+    for model in (TestMonitorFieldModel, TestDoubleMonitorFieldModel):
+        model.objects.create()
+        for field, _ in get_fields_with_model(model):
+            results = list(model.objects.only(field.name))
+
+@pytest.mark.django_db
+def test_recursion_errors_from_queryset_defer_method():
+    # include list() to force evaluation of the queryset
+
+    def get_fields_with_model(MyModel):
+        return [
+            (f, f.model if f.model != MyModel else None)
+            for f in MyModel._meta.get_fields()
+            if not f.is_relation
+            or f.one_to_one
+            or (f.many_to_one and f.related_model)
+        ]
+
+    for model in (TestMonitorFieldModel, TestDoubleMonitorFieldModel):
+        model.objects.create()
+        for field, _ in get_fields_with_model(model):
+            results = list(model.objects.defer(field.name))

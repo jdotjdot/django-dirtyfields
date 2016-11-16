@@ -1,2 +1,4 @@
-Django>=1.4
-pytz>=2015.7
+Django==1.10.3
+django-model-utils==2.6
+pytz==2016.7
+wsgiref==0.1.2
